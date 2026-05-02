@@ -1,0 +1,1896 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>glp1.cl — Tratamiento médico online para bajar de peso</title>
+  <meta name="description" content="Evaluación médica, receta electrónica y despacho a domicilio. Tratamiento con GLP-1 supervisado por médicos chilenos titulados." />
+  <meta name="theme-color" content="#0F2722" />
+
+  <meta property="og:title" content="glp1.cl — Bajar de peso con respaldo médico" />
+  <meta property="og:description" content="Tratamiento con GLP-1 supervisado por médicos chilenos. Online. Sin esperas." />
+  <meta property="og:type" content="website" />
+  <meta property="og:locale" content="es_CL" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@9..144,300..900,0..100,0..1&family=DM+Sans:opsz,wght@9..40,300..700&display=swap" rel="stylesheet" />
+
+  <style>
+    /* TOKENS */
+    :root {
+      --cream: #F5F1EA;
+      --cream-warm: #EFE8DC;
+      --cream-deep: #E5DCCC;
+      --ink: #0F2722;
+      --ink-soft: #1A3530;
+      --muted: #5C5045;
+      --muted-light: #8A7E72;
+      --paper: #FFFFFF;
+      --rust: #C44536;
+      --rust-deep: #A6382B;
+      --sage: #6B8472;
+      --sage-light: #B8C9B8;
+      --line: rgba(15, 39, 34, 0.12);
+      --line-soft: rgba(15, 39, 34, 0.06);
+      --serif: 'Fraunces', 'Times New Roman', serif;
+      --sans: 'DM Sans', system-ui, -apple-system, sans-serif;
+      --max: 1240px;
+      --gutter: 20px;
+    }
+    @media (min-width: 768px) {
+      :root { --gutter: 40px; }
+    }
+
+
+    .ambient-glow {
+      position: fixed;
+      width: 600px;
+      height: 600px;
+      border-radius: 50%;
+      filter: blur(120px);
+      pointer-events: none;
+      z-index: -2;
+      opacity: 0.6;
+    }
+    .glow-1 {
+      top: -200px;
+      left: -200px;
+      background: rgba(107, 132, 114, 0.15);
+    }
+    .glow-2 {
+      bottom: -100px;
+      right: -100px;
+      background: rgba(196, 69, 54, 0.1);
+    }
+    /* RESET */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html {
+      scroll-behavior: smooth;
+      -webkit-text-size-adjust: 100%;
+      -webkit-tap-highlight-color: transparent;
+    }
+    body {
+      font-family: var(--sans);
+      font-size: 16px;
+      line-height: 1.5;
+      color: var(--ink);
+      background: var(--cream);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      overflow-x: hidden;
+    }
+    img, svg { display: block; max-width: 100%; }
+    a { color: inherit; text-decoration: none; }
+    button, input { font-family: inherit; }
+    button { cursor: pointer; border: none; background: none; }
+    input {
+      font-size: 16px;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+
+    /* TYPE */
+    .display {
+      font-family: var(--serif);
+      font-weight: 350;
+      font-variation-settings: "opsz" 144, "SOFT" 30, "WONK" 0;
+      letter-spacing: -0.025em;
+      line-height: 0.98;
+    }
+    .display em {
+      font-style: italic;
+      font-weight: 300;
+      font-variation-settings: "opsz" 144, "SOFT" 100, "WONK" 1;
+      color: var(--rust);
+    }
+    .eyebrow {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--rust);
+    }
+    @media (min-width: 768px) {
+      .eyebrow { font-size: 12px; letter-spacing: 0.16em; }
+    }
+    .lead {
+      font-size: 16px;
+      line-height: 1.55;
+      color: var(--muted);
+      max-width: 56ch;
+    }
+    @media (min-width: 768px) {
+      .lead { font-size: 18px; }
+    }
+    @media (min-width: 1024px) {
+      .lead { font-size: 19px; }
+    }
+
+    /* LAYOUT */
+    .container {
+      max-width: var(--max);
+      margin: 0 auto;
+      padding: 0 var(--gutter);
+    }
+    section {
+      padding: 64px 0;
+    }
+    @media (min-width: 768px) {
+      section { padding: 96px 0; }
+    }
+    @media (min-width: 1024px) {
+      section { padding: 120px 0; }
+    }
+
+    /* NAV */
+    .nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(245, 241, 234, 0.88);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--line-soft);
+    }
+    .nav-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px var(--gutter);
+      max-width: var(--max);
+      margin: 0 auto;
+    }
+    @media (min-width: 768px) {
+      .nav-inner { padding: 18px var(--gutter); }
+    }
+    .logo {
+      font-family: var(--serif);
+      font-weight: 400;
+      font-size: 20px;
+      letter-spacing: -0.02em;
+    }
+    @media (min-width: 768px) {
+      .logo { font-size: 22px; }
+    }
+    .logo-dot { color: var(--rust); }
+    .nav-links {
+      display: flex;
+      gap: 32px;
+      align-items: center;
+    }
+    .nav-links a:not(.btn-nav) {
+      font-size: 14px;
+      color: var(--ink);
+      transition: color .2s ease;
+    }
+    .nav-links a:not(.btn-nav):hover { color: var(--rust); }
+
+    .btn-nav {
+      padding: 9px 18px;
+      background: var(--ink);
+      color: var(--cream) !important;
+      border-radius: 100px;
+      font-size: 13px;
+      font-weight: 500;
+      transition: background .2s ease;
+    }
+    @media (min-width: 768px) {
+      .btn-nav { padding: 10px 20px; font-size: 14px; }
+    }
+    .btn-nav:hover { background: var(--rust) !important; }
+
+
+    .menu-toggle {
+      display: none;
+      background: none;
+      border: none;
+      color: var(--ink);
+      padding: 4px;
+      cursor: pointer;
+    }
+    .menu-toggle svg {
+      transition: transform 0.3s ease;
+    }
+    @media (max-width: 820px) {
+      .menu-toggle { display: block; }
+      .nav-links {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: rgba(245, 241, 234, 0.98);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        flex-direction: column;
+        padding: 24px var(--gutter);
+        border-bottom: 1px solid var(--line-soft);
+        gap: 20px;
+        transform: translateY(-10px);
+        opacity: 0;
+        pointer-events: none;
+        transition: all .4s cubic-bezier(0.16, 1, 0.3, 1);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+      }
+      .nav-links.is-open {
+        transform: translateY(0);
+        opacity: 1;
+        pointer-events: auto;
+      }
+      .nav-links a:not(.btn-nav) {
+        display: block !important;
+        font-size: 18px !important;
+        padding: 8px 0;
+        border-bottom: 1px solid var(--line-soft);
+      }
+      .nav-links a:not(.btn-nav):last-of-type {
+        border-bottom: none;
+      }
+      .btn-nav {
+        text-align: center;
+        width: 100%;
+        padding: 16px !important;
+        font-size: 16px !important;
+        margin-top: 8px;
+      }
+    }
+    /* HERO */
+    .hero {
+      padding: 32px 0 56px;
+      position: relative;
+      overflow: hidden;
+    }
+    @media (min-width: 768px) {
+      .hero { padding: 64px 0 96px; }
+    }
+    @media (min-width: 1024px) {
+      .hero { padding: 80px 0 120px; }
+    }
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 36px;
+    }
+    @media (min-width: 920px) {
+      .hero-grid {
+        grid-template-columns: 1.3fr 1fr;
+        gap: 64px;
+        align-items: end;
+      }
+    }
+    .hero-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .hero-eyebrow::before {
+      content: "";
+      width: 24px;
+      height: 1px;
+      background: var(--rust);
+    }
+    @media (min-width: 768px) {
+      .hero-eyebrow { margin-bottom: 28px; }
+    }
+    .hero h1 {
+      font-size: 44px;
+      margin-bottom: 20px;
+      max-width: 14ch;
+    }
+    @media (min-width: 480px) {
+      .hero h1 { font-size: 52px; }
+    }
+    @media (min-width: 768px) {
+      .hero h1 {
+        font-size: 76px;
+        margin-bottom: 28px;
+      }
+    }
+    @media (min-width: 1024px) {
+      .hero h1 { font-size: 96px; }
+    }
+    @media (min-width: 1280px) {
+      .hero h1 { font-size: 116px; }
+    }
+    .hero-meta {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+      margin-top: 28px;
+      padding-top: 24px;
+      border-top: 1px solid var(--line);
+    }
+    @media (min-width: 768px) {
+      .hero-meta {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+      }
+    }
+    @media (min-width: 768px) {
+      .hero-meta { gap: 32px; margin-top: 40px; padding-top: 28px; }
+    }
+    .hero-meta-item {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .hero-meta-item strong {
+      font-family: var(--serif);
+      font-weight: 400;
+      font-size: 20px;
+      color: var(--ink);
+      letter-spacing: -0.02em;
+      line-height: 1.1;
+    }
+    @media (min-width: 768px) {
+      .hero-meta-item strong { font-size: 28px; }
+    }
+    .hero-meta-item span {
+      font-size: 11px;
+      color: var(--muted);
+      line-height: 1.3;
+    }
+    @media (min-width: 768px) {
+      .hero-meta-item span { font-size: 13px; }
+    }
+
+    /* QUIZ CARD */
+    .quiz-card {
+      background: var(--paper);
+      border-radius: 20px;
+      padding: 24px 20px;
+      box-shadow: 0 1px 0 var(--line), 0 12px 32px -16px rgba(15, 39, 34, 0.18);
+      position: relative;
+    }
+    @media (min-width: 768px) {
+      .quiz-card {
+        border-radius: 24px;
+        padding: 32px;
+        box-shadow: 0 1px 0 var(--line), 0 24px 48px -24px rgba(15, 39, 34, 0.18);
+      }
+    }
+    .quiz-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      background: var(--cream-warm);
+      border-radius: 100px;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--ink);
+      margin-bottom: 16px;
+    }
+    @media (min-width: 768px) {
+      .quiz-tag { font-size: 12px; margin-bottom: 20px; }
+    }
+    .quiz-tag::before {
+      content: "";
+      width: 6px;
+      height: 6px;
+      background: var(--sage);
+      border-radius: 50%;
+      box-shadow: 0 0 0 4px rgba(107, 132, 114, 0.2);
+      animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 0 4px rgba(107, 132, 114, 0.2); }
+      50% { box-shadow: 0 0 0 6px rgba(107, 132, 114, 0.05); }
+    }
+    .quiz-card h3 {
+      font-family: var(--serif);
+      font-weight: 400;
+      font-size: 22px;
+      line-height: 1.15;
+      letter-spacing: -0.015em;
+      margin-bottom: 6px;
+    }
+    @media (min-width: 768px) {
+      .quiz-card h3 { font-size: 26px; margin-bottom: 8px; }
+    }
+    .quiz-sub {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 20px;
+      line-height: 1.45;
+    }
+    @media (min-width: 768px) {
+      .quiz-sub { font-size: 14px; margin-bottom: 24px; }
+    }
+    .quiz-step { display: none; }
+    .quiz-step.active {
+      display: block;
+      animation: stepIn .35s ease-out;
+    }
+    @keyframes stepIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .quiz-question {
+      font-size: 13px;
+      font-weight: 500;
+      margin-bottom: 12px;
+      color: var(--ink);
+    }
+    @media (min-width: 768px) {
+      .quiz-question { font-size: 14px; margin-bottom: 14px; }
+    }
+    .quiz-input-row {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    @media (min-width: 480px) {
+      .quiz-input-row { grid-template-columns: 1fr 1fr; }
+    }
+    @media (min-width: 768px) {
+      .quiz-input-row { gap: 12px; margin-bottom: 20px; }
+    }
+    .quiz-input-row label {
+      font-size: 11px;
+      color: var(--muted);
+      display: block;
+      margin-bottom: 6px;
+    }
+    @media (min-width: 768px) {
+      .quiz-input-row label { font-size: 12px; }
+    }
+    .quiz-input-row input {
+      width: 100%;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      font-size: 16px;
+      background: var(--cream);
+      color: var(--ink);
+      transition: border-color .2s ease;
+    }
+    .quiz-input-row input:focus {
+      outline: none;
+      border-color: var(--ink);
+    }
+    .quiz-options {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    @media (min-width: 768px) {
+      .quiz-options { margin-bottom: 20px; }
+    }
+    .quiz-option {
+      padding: 14px 16px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--cream);
+      text-align: left;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--ink);
+      transition: all .2s ease;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+    }
+    .quiz-option:hover { border-color: var(--ink); }
+    .quiz-option:active { background: var(--cream-warm); }
+    .quiz-option .arrow {
+      opacity: 0.4;
+      color: var(--rust);
+      transition: opacity .2s ease;
+      flex-shrink: 0;
+    }
+    @media (min-width: 768px) {
+      .quiz-option .arrow { opacity: 0; }
+      .quiz-option:hover .arrow { opacity: 1; }
+      .quiz-option:hover { transform: translateX(2px); }
+    }
+    .quiz-progress {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 20px;
+    }
+    @media (min-width: 768px) {
+      .quiz-progress { margin-bottom: 24px; }
+    }
+    .quiz-progress-bar {
+      flex: 1;
+      height: 3px;
+      background: var(--cream-deep);
+      border-radius: 100px;
+      transition: background .3s ease;
+    }
+    .quiz-progress-bar.done { background: var(--ink); }
+
+    .btn-primary {
+      display: inline-flex;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 4px 14px rgba(15,39,34,0.15);
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      padding: 16px 24px;
+      background: var(--ink);
+      color: var(--cream);
+      border-radius: 100px;
+      font-size: 15px;
+      font-weight: 500;
+      transition: background .2s ease;
+    }
+    .btn-primary::after {
+      content: ""; position: absolute; inset: 0; background: linear-gradient(120deg, transparent, rgba(255,255,255,0.2), transparent); transform: translateX(-100%); transition: transform 0.6s;
+    }
+    .btn-primary:hover::after { transform: translateX(100%); }
+    .btn-primary:hover { background: var(--rust); box-shadow: 0 6px 20px rgba(196,69,54,0.3); transform: translateY(-1px); }
+    .btn-primary:active { transform: scale(0.98); }
+    .btn-primary svg { transition: transform .2s ease; }
+    .btn-primary:hover svg { transform: translateX(3px); }
+
+    .quiz-result { text-align: center; padding: 4px 0; }
+    .quiz-result-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: var(--cream-warm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 14px;
+      color: var(--sage);
+    }
+    .quiz-result h4 {
+      font-family: var(--serif);
+      font-weight: 400;
+      font-size: 22px;
+      margin-bottom: 8px;
+      letter-spacing: -0.015em;
+    }
+    @media (min-width: 768px) {
+      .quiz-result h4 { font-size: 24px; }
+    }
+    .quiz-result p {
+      font-size: 14px;
+      color: var(--muted);
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+    .hero-decor {
+      position: absolute;
+      top: 60px;
+      right: -160px;
+      width: 480px;
+      height: 480px;
+      background: radial-gradient(circle, rgba(196, 69, 54, 0.08) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    /* STATS BAR */
+    .stats-bar {
+      background: var(--ink);
+      color: var(--cream);
+      padding: 20px 0;
+      overflow: hidden;
+    }
+    @media (min-width: 768px) {
+      .stats-bar { padding: 28px 0; }
+    }
+    .stats-track {
+      display: flex;
+      gap: 32px;
+      animation: scroll 40s linear infinite;
+      white-space: nowrap;
+    }
+    @media (min-width: 768px) {
+      .stats-track { gap: 60px; }
+    }
+    @keyframes scroll {
+      from { transform: translateX(0); }
+      to { transform: translateX(-50%); }
+    }
+    .stats-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+      flex-shrink: 0;
+    }
+    @media (min-width: 768px) {
+      .stats-item { font-size: 15px; gap: 16px; }
+    }
+    .stats-item strong {
+      font-family: var(--serif);
+      font-weight: 400;
+      font-size: 20px;
+      color: var(--rust);
+    }
+    @media (min-width: 768px) {
+      .stats-item strong { font-size: 28px; }
+    }
+    .stats-divider {
+      width: 4px;
+      height: 4px;
+      background: var(--cream);
+      border-radius: 50%;
+      opacity: 0.4;
+      flex-shrink: 0;
+    }
+
+    /* SECTION HEADERS */
+    .section-head {
+      max-width: 760px;
+      margin-bottom: 40px;
+    }
+    @media (min-width: 768px) {
+      .section-head { margin-bottom: 64px; }
+    }
+    .section-head .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    @media (min-width: 768px) {
+      .section-head .eyebrow { margin-bottom: 24px; }
+    }
+    .section-head .eyebrow::before {
+      content: "";
+      width: 24px;
+      height: 1px;
+      background: var(--rust);
+    }
+    .section-head h2 {
+      font-size: 36px;
+      margin-bottom: 16px;
+    }
+    @media (min-width: 480px) {
+      .section-head h2 { font-size: 42px; }
+    }
+    @media (min-width: 768px) {
+      .section-head h2 { font-size: 56px; margin-bottom: 20px; }
+    }
+    @media (min-width: 1024px) {
+      .section-head h2 { font-size: 64px; }
+    }
+
+    /* HOW IT WORKS */
+    .steps {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+      background: transparent;
+      border-radius: 0;
+      border: none;
+      overflow: visible;
+    }
+    @media (min-width: 820px) {
+      .steps {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1px;
+        background: var(--line);
+        border-radius: 24px;
+        border: 1px solid var(--line);
+        overflow: hidden;
+      }
+    }
+    @media (min-width: 820px) {
+      .steps {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 2px;
+        border-radius: 24px;
+      }
+    }
+    .step {
+      background: var(--paper);
+      padding: 28px 24px;
+      transition: background .3s ease, transform .3s ease, box-shadow .3s ease;
+      border-radius: 20px;
+      border: 1px solid var(--line);
+    }
+    @media (min-width: 820px) {
+      .step {
+        border-radius: 0;
+        border: none;
+      }
+    }
+    .step:hover {
+      background: var(--cream-warm);
+      transform: translateY(-4px);
+      box-shadow: 0 12px 32px -16px rgba(15, 39, 34, 0.15);
+    }
+    @media (min-width: 768px) {
+      .step { padding: 36px; }
+    }
+    .step:hover { background: var(--cream-warm); }
+    .step-num {
+      font-family: var(--serif);
+      font-style: italic;
+      font-weight: 300;
+      font-size: 48px;
+      color: var(--rust);
+      line-height: 1;
+      margin-bottom: 20px;
+      font-variation-settings: "opsz" 144, "SOFT" 100, "WONK" 1;
+    }
+    @media (min-width: 768px) {
+      .step-num { font-size: 64px; margin-bottom: 32px; }
+    }
+    .step h3 {
+      font-family: var(--serif);
+      font-weight: 400;
+      font-size: 22px;
+      letter-spacing: -0.015em;
+      line-height: 1.15;
+      margin-bottom: 10px;
+    }
+    @media (min-width: 768px) {
+      .step h3 { font-size: 26px; margin-bottom: 12px; }
+    }
+    .step p {
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.55;
+      margin-bottom: 16px;
+    }
+    @media (min-width: 768px) {
+      .step p { font-size: 15px; }
+    }
+    .step-meta {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      background: var(--cream);
+      border-radius: 100px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--ink);
+    }
+    .step-meta::before {
+      content: "";
+      width: 5px;
+      height: 5px;
+      background: var(--sage);
+      border-radius: 50%;
+    }
+
+    /* PRICING */
+    .pricing-section {
+      background: var(--ink);
+      color: var(--cream);
+      border-radius: 20px;
+      margin: 0 var(--gutter);
+      padding: 48px 24px;
+      position: relative;
+      overflow: hidden;
+    }
+    @media (min-width: 768px) {
+      .pricing-section {
+        border-radius: 32px;
+        padding: 80px 56px;
+      }
+    }
+    .pricing-section::before {
+      content: "";
+      position: absolute;
+      top: -200px;
+      right: -200px;
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(196, 69, 54, 0.18) 0%, transparent 60%);
+      pointer-events: none;
+    }
+    .pricing-head {
+      max-width: 720px;
+      margin-bottom: 40px;
+      position: relative;
+    }
+    @media (min-width: 768px) {
+      .pricing-head { margin-bottom: 64px; }
+    }
+    .pricing-head .eyebrow { color: var(--rust); }
+    .pricing-head h2 {
+      color: var(--cream);
+      font-size: 36px;
+      margin: 16px 0;
+    }
+    @media (min-width: 480px) {
+      .pricing-head h2 { font-size: 42px; }
+    }
+    @media (min-width: 768px) {
+      .pricing-head h2 { font-size: 56px; margin: 24px 0 20px; }
+    }
+    @media (min-width: 1024px) {
+      .pricing-head h2 { font-size: 64px; }
+    }
+    .pricing-head .lead { color: rgba(245, 241, 234, 0.7); }
+    .plans {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 14px;
+      position: relative;
+    }
+    @media (min-width: 920px) {
+      .plans {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+      }
+    }
+    .plan {
+      background: rgba(245, 241, 234, 0.04);
+      border: 1px solid rgba(245, 241, 234, 0.12);
+      border-radius: 16px;
+      padding: 28px 24px;
+      display: flex;
+      flex-direction: column;
+      transition: border-color .3s ease, background .3s ease;
+    }
+    @media (min-width: 768px) {
+      .plan { padding: 32px; }
+    }
+    .plan:hover {
+      border-color: rgba(245, 241, 234, 0.3);
+      background: rgba(245, 241, 234, 0.06);
+    }
+    .plan.featured {
+      background: var(--cream);
+      color: var(--ink);
+      border-color: var(--cream);
+      position: relative;
+      margin-top: 12px;
+    }
+    @media (min-width: 920px) {
+      .plan.featured { margin-top: 0; }
+    }
+    .plan.featured:hover {
+      background: var(--cream);
+      border-color: var(--cream);
+    }
+    .plan-badge {
+      position: absolute;
+      top: -12px;
+      left: 24px;
+      padding: 6px 14px;
+      background: var(--rust);
+      color: var(--cream);
+      border-radius: 100px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .plan-name {
+      font-family: var(--serif);
+      font-weight: 400;
+      font-size: 20px;
+      letter-spacing: -0.01em;
+      margin-bottom: 6px;
+    }
+    @media (min-width: 768px) {
+      .plan-name { font-size: 22px; margin-bottom: 8px; }
+    }
+    .plan-tagline {
+      font-size: 13px;
+      opacity: 0.7;
+      margin-bottom: 24px;
+      line-height: 1.45;
+    }
+    @media (min-width: 768px) {
+      .plan-tagline { margin-bottom: 28px; }
+    }
+    .plan-price {
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+      margin-bottom: 4px;
+    }
+    .plan-price .amount {
+      font-family: var(--serif);
+      font-weight: 400;
+      font-size: 38px;
+      letter-spacing: -0.02em;
+      line-height: 1;
+    }
+    @media (min-width: 768px) {
+      .plan-price .amount { font-size: 48px; }
+    }
+    .plan-price .period {
+      font-size: 14px;
+      opacity: 0.7;
+    }
+    .plan-note {
+      font-size: 12px;
+      opacity: 0.6;
+      margin-bottom: 24px;
+    }
+    @media (min-width: 768px) {
+      .plan-note { font-size: 13px; margin-bottom: 28px; }
+    }
+    .plan-features {
+      list-style: none;
+      margin-bottom: 28px;
+      flex: 1;
+    }
+    @media (min-width: 768px) {
+      .plan-features { margin-bottom: 32px; }
+    }
+    .plan-features li {
+      font-size: 14px;
+      padding: 10px 0;
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      border-bottom: 1px solid rgba(245, 241, 234, 0.08);
+      line-height: 1.4;
+    }
+    .plan.featured .plan-features li {
+      border-bottom-color: var(--line);
+    }
+    .plan-features li::before {
+      content: "→";
+      color: var(--rust);
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+    .plan-cta {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      padding: 14px 20px;
+      background: transparent;
+      color: var(--cream);
+      border: 1px solid rgba(245, 241, 234, 0.3);
+      border-radius: 100px;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all .2s ease;
+    }
+    .plan-cta:hover {
+      background: var(--cream);
+      color: var(--ink);
+      border-color: var(--cream);
+    }
+    .plan.featured .plan-cta {
+      background: var(--ink);
+      color: var(--cream);
+      border-color: var(--ink);
+    }
+    .plan.featured .plan-cta:hover {
+      background: var(--rust);
+      border-color: var(--rust);
+    }
+
+    /* TRUST */
+    .trust { background: var(--cream-warm); }
+    .trust-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 32px;
+    }
+    @media (min-width: 820px) {
+      .trust-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 64px;
+        align-items: center;
+      }
+    }
+    .trust-points {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin-top: 24px;
+    }
+    @media (min-width: 768px) {
+      .trust-points { gap: 16px; margin-top: 32px; }
+    }
+    .trust-point {
+      display: flex;
+      gap: 14px;
+      padding: 18px;
+      background: var(--paper);
+      border-radius: 14px;
+      border: 1px solid var(--line-soft);
+    }
+    @media (min-width: 768px) {
+      .trust-point { gap: 18px; padding: 20px; border-radius: 16px; }
+    }
+    .trust-icon {
+      flex-shrink: 0;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: var(--cream);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--rust);
+    }
+    @media (min-width: 768px) {
+      .trust-icon { width: 40px; height: 40px; }
+    }
+    .trust-point h4 {
+      font-family: var(--serif);
+      font-weight: 400;
+      font-size: 17px;
+      letter-spacing: -0.01em;
+      margin-bottom: 4px;
+      line-height: 1.25;
+    }
+    @media (min-width: 768px) {
+      .trust-point h4 { font-size: 19px; }
+    }
+    .trust-point p {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+    @media (min-width: 768px) {
+      .trust-point p { font-size: 14px; }
+    }
+    .quote-card {
+      background: var(--paper);
+      border-radius: 20px;
+      padding: 28px 24px;
+      position: relative;
+    }
+    @media (min-width: 768px) {
+      .quote-card { border-radius: 24px; padding: 40px; }
+    }
+    .quote-mark {
+      font-family: var(--serif);
+      font-style: italic;
+      font-size: 72px;
+      line-height: 0.6;
+      color: var(--rust);
+      margin-bottom: 8px;
+      font-variation-settings: "opsz" 144, "SOFT" 100, "WONK" 1;
+    }
+    @media (min-width: 768px) {
+      .quote-mark { font-size: 96px; }
+    }
+    .quote-card blockquote {
+      font-family: var(--serif);
+      font-weight: 350;
+      font-size: 19px;
+      line-height: 1.3;
+      letter-spacing: -0.01em;
+      margin-bottom: 24px;
+    }
+    @media (min-width: 480px) {
+      .quote-card blockquote { font-size: 22px; }
+    }
+    @media (min-width: 768px) {
+      .quote-card blockquote { font-size: 26px; line-height: 1.25; margin-bottom: 28px; }
+    }
+    .quote-author {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding-top: 20px;
+      border-top: 1px solid var(--line);
+    }
+    @media (min-width: 768px) {
+      .quote-author { padding-top: 24px; }
+    }
+    .quote-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--cream-deep), var(--sage-light));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--serif);
+      font-weight: 400;
+      font-size: 16px;
+      color: var(--ink);
+      flex-shrink: 0;
+    }
+    @media (min-width: 768px) {
+      .quote-avatar { width: 48px; height: 48px; font-size: 18px; }
+    }
+    .quote-author strong {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+    @media (min-width: 768px) {
+      .quote-author strong { font-size: 14px; }
+    }
+    .quote-author span {
+      font-size: 12px;
+      color: var(--muted);
+    }
+    @media (min-width: 768px) {
+      .quote-author span { font-size: 13px; }
+    }
+
+    /* FAQ */
+    .faq-list { max-width: 920px; }
+    .faq-item { border-bottom: 1px solid var(--line); }
+    .faq-trigger {
+      width: 100%;
+      padding: 20px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      text-align: left;
+      font-family: var(--serif);
+      font-weight: 400;
+      font-size: 17px;
+      letter-spacing: -0.01em;
+      color: var(--ink);
+      transition: color .2s ease;
+      line-height: 1.3;
+    }
+    @media (min-width: 768px) {
+      .faq-trigger { padding: 24px 0; gap: 24px; font-size: 21px; }
+    }
+    .faq-trigger:hover { color: var(--rust); }
+    .faq-icon {
+      flex-shrink: 0;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      border: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all .3s ease;
+      font-size: 14px;
+    }
+    @media (min-width: 768px) {
+      .faq-icon { width: 28px; height: 28px; }
+    }
+    .faq-item.open .faq-icon {
+      background: var(--ink);
+      border-color: var(--ink);
+      color: var(--cream);
+      transform: rotate(45deg);
+    }
+    .faq-content {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height .4s ease, padding .4s ease;
+    }
+    .faq-item.open .faq-content {
+      max-height: 500px;
+      padding: 0 0 24px;
+    }
+    @media (min-width: 768px) {
+      .faq-item.open .faq-content { padding: 0 0 28px; }
+    }
+    .faq-content p {
+      font-size: 14px;
+      line-height: 1.6;
+      color: var(--muted);
+      max-width: 70ch;
+    }
+    @media (min-width: 768px) {
+      .faq-content p { font-size: 15px; }
+    }
+
+    /* CTA BIG */
+    .cta-big {
+      text-align: center;
+      padding: 72px 0 96px;
+      position: relative;
+    }
+    @media (min-width: 768px) {
+      .cta-big { padding: 120px 0; }
+    }
+    .cta-big::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse at top, rgba(196, 69, 54, 0.08) 0%, transparent 50%),
+        radial-gradient(ellipse at bottom, rgba(107, 132, 114, 0.06) 0%, transparent 50%);
+      pointer-events: none;
+    }
+    .cta-big h2 {
+      font-size: 40px;
+      margin: 16px auto 20px;
+      max-width: 14ch;
+    }
+    @media (min-width: 480px) {
+      .cta-big h2 { font-size: 50px; }
+    }
+    @media (min-width: 768px) {
+      .cta-big h2 { font-size: 72px; margin: 24px auto 28px; }
+    }
+    @media (min-width: 1024px) {
+      .cta-big h2 { font-size: 88px; }
+    }
+    .cta-big .lead {
+      margin: 0 auto 32px;
+      text-align: center;
+    }
+    @media (min-width: 768px) {
+      .cta-big .lead { margin-bottom: 40px; }
+    }
+    .cta-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      justify-content: center;
+      align-items: center;
+      max-width: 360px;
+      margin: 0 auto;
+    }
+    @media (min-width: 600px) {
+      .cta-actions {
+        flex-direction: row;
+        gap: 12px;
+        max-width: none;
+      }
+    }
+    .btn-large {
+      padding: 16px 28px;
+      font-size: 15px;
+      width: 100%;
+    }
+    @media (min-width: 600px) {
+      .btn-large { padding: 18px 32px; font-size: 16px; width: auto; }
+    }
+    .btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 16px 28px;
+      background: transparent;
+      color: var(--ink);
+      border: 1px solid var(--ink);
+      border-radius: 100px;
+      font-size: 15px;
+      font-weight: 500;
+      transition: all .2s ease;
+      width: 100%;
+    }
+    @media (min-width: 600px) {
+      .btn-secondary { padding: 18px 32px; font-size: 16px; width: auto; }
+    }
+    .btn-secondary:hover {
+      background: var(--ink);
+      color: var(--cream);
+    }
+
+    /* FOOTER */
+    footer {
+      background: var(--ink);
+      color: var(--cream);
+      padding: 56px 0 32px;
+    }
+    @media (min-width: 768px) {
+      footer { padding: 80px 0 40px; }
+    }
+    .footer-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 36px;
+      margin-bottom: 40px;
+    }
+    @media (min-width: 600px) {
+      .footer-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 32px;
+      }
+    }
+    @media (min-width: 920px) {
+      .footer-grid {
+        grid-template-columns: 2fr 1fr 1fr 1fr;
+        gap: 48px;
+        margin-bottom: 64px;
+      }
+    }
+    .footer-brand h3 {
+      font-family: var(--serif);
+      font-weight: 400;
+      font-size: 28px;
+      letter-spacing: -0.02em;
+      margin-bottom: 12px;
+    }
+    @media (min-width: 768px) {
+      .footer-brand h3 { font-size: 32px; margin-bottom: 16px; }
+    }
+    .footer-brand p {
+      font-size: 13px;
+      color: rgba(245, 241, 234, 0.6);
+      max-width: 36ch;
+      line-height: 1.55;
+    }
+    @media (min-width: 768px) {
+      .footer-brand p { font-size: 14px; }
+    }
+    .footer-col h5 {
+      font-size: 11px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--rust);
+      margin-bottom: 16px;
+    }
+    @media (min-width: 768px) {
+      .footer-col h5 { font-size: 12px; margin-bottom: 20px; }
+    }
+    .footer-col ul {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    @media (min-width: 768px) {
+      .footer-col ul { gap: 12px; }
+    }
+    .footer-col a {
+      font-size: 13px;
+      color: rgba(245, 241, 234, 0.7);
+      transition: color .2s ease;
+    }
+    @media (min-width: 768px) {
+      .footer-col a { font-size: 14px; }
+    }
+    .footer-col a:hover { color: var(--cream); }
+    .footer-bottom {
+      padding-top: 24px;
+      border-top: 1px solid rgba(245, 241, 234, 0.1);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    @media (min-width: 768px) {
+      .footer-bottom {
+        padding-top: 32px;
+        flex-direction: row;
+        justify-content: space-between;
+        gap: 32px;
+      }
+    }
+    .disclaimer {
+      font-size: 11px;
+      color: rgba(245, 241, 234, 0.5);
+      line-height: 1.55;
+      max-width: 80ch;
+    }
+    @media (min-width: 768px) {
+      .disclaimer { font-size: 12px; line-height: 1.5; }
+    }
+    .copyright {
+      font-size: 11px;
+      color: rgba(245, 241, 234, 0.5);
+    }
+    @media (min-width: 768px) {
+      .copyright { font-size: 12px; }
+    }
+
+    /* FLOATING CTA */
+    @keyframes pulse-wa {
+      0% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.4); }
+      70% { box-shadow: 0 0 0 15px rgba(37, 211, 102, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0); }
+    }
+    .float-cta {
+      position: fixed;
+      animation: pulse-wa 2s infinite;
+      bottom: 16px;
+      right: 16px;
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 52px;
+      height: 52px;
+      background: #25D366;
+      color: white;
+      border-radius: 50%;
+      font-size: 14px;
+      font-weight: 500;
+      box-shadow: 0 6px 20px rgba(37, 211, 102, 0.45);
+      transition: transform .2s ease;
+    }
+    .float-cta:hover { transform: translateY(-2px); }
+    @media (min-width: 768px) {
+      .float-cta {
+        width: auto;
+        height: auto;
+        bottom: 24px;
+        right: 24px;
+        gap: 8px;
+        padding: 14px 20px;
+        border-radius: 100px;
+      }
+    }
+    .float-cta-text { display: none; }
+    @media (min-width: 768px) {
+      .float-cta-text { display: inline; }
+    }
+
+    /* ANIMATIONS */
+    .reveal {
+      opacity: 0;
+      transform: translateY(16px);
+      transition: opacity .7s ease, transform .7s ease;
+    }
+    .reveal.in {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .delay-1 { transition-delay: .08s; }
+    .delay-2 { transition-delay: .16s; }
+    .delay-3 { transition-delay: .24s; }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+      .reveal { opacity: 1; transform: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="ambient-glow glow-1"></div>
+  <div class="ambient-glow glow-2"></div>
+
+  <nav class="nav">
+    <div class="nav-inner">
+      <a href="#" class="logo">glp1<span class="logo-dot">.</span>cl</a>
+      <div class="nav-links" id="nav-links">
+        <a href="#como-funciona" onclick="toggleMenu()">Cómo funciona</a>
+        <a href="#planes" onclick="toggleMenu()">Planes</a>
+        <a href="#medicos" onclick="toggleMenu()">Médicos</a>
+        <a href="#faq" onclick="toggleMenu()">Preguntas</a>
+        <a href="#evaluacion" class="btn-nav" onclick="toggleMenu()">Comenzar</a>
+      </div>
+      <button class="menu-toggle" onclick="toggleMenu()" aria-label="Menu">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" id="menu-icon"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+      </button>
+    </div>
+  </nav>
+
+  <section class="hero">
+    <div class="hero-decor"></div>
+    <div class="container">
+      <div class="hero-grid">
+        <div>
+          <div class="hero-eyebrow eyebrow reveal">Telemedicina · Chile</div>
+          <h1 class="display reveal delay-1">Baja de peso con <em>respaldo médico</em> real.</h1>
+          <p class="lead reveal delay-2">Evaluación con médico chileno titulado, receta electrónica y despacho a domicilio. Tratamiento con GLP-1 supervisado paso a paso. Todo en línea, en menos de 48 horas.</p>
+          <div class="hero-meta reveal delay-3">
+            <div class="hero-meta-item"><strong>48 hrs</strong><span>de evaluación a despacho</span></div>
+            <div class="hero-meta-item"><strong>100%</strong><span>online y a domicilio</span></div>
+            <div class="hero-meta-item"><strong>Chile</strong><span>despacho nacional</span></div>
+          </div>
+        </div>
+
+        <div class="quiz-card reveal delay-2" id="evaluacion">
+          <div class="quiz-tag">Evaluación gratuita · 60 segundos</div>
+          <h3 id="quiz-title">¿Eres candidato al tratamiento?</h3>
+          <p class="quiz-sub" id="quiz-subtitle">Responde 3 preguntas y descubre si el tratamiento con GLP-1 puede ser para ti.</p>
+          <div class="quiz-progress">
+            <div class="quiz-progress-bar done" id="bar-1"></div>
+            <div class="quiz-progress-bar" id="bar-2"></div>
+            <div class="quiz-progress-bar" id="bar-3"></div>
+          </div>
+
+          <div class="quiz-step active" id="step-1">
+            <div class="quiz-question">Cuéntanos tu peso y estatura</div>
+            <div class="quiz-input-row">
+              <div>
+                <label for="peso">Peso (kg)</label>
+                <input type="number" id="peso" inputmode="numeric" placeholder="78" min="40" max="250" />
+              </div>
+              <div>
+                <label for="estatura">Estatura (cm)</label>
+                <input type="number" id="estatura" inputmode="numeric" placeholder="170" min="120" max="220" />
+              </div>
+            </div>
+            <button class="btn-primary" onclick="nextStep(1)">Continuar
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+            </button>
+          </div>
+
+          <div class="quiz-step" id="step-2">
+            <div class="quiz-question">¿Cuál es tu objetivo principal?</div>
+            <div class="quiz-options">
+              <button class="quiz-option" onclick="nextStep(2)"><span>Bajar 5–10 kg</span><span class="arrow">→</span></button>
+              <button class="quiz-option" onclick="nextStep(2)"><span>Bajar 10–20 kg</span><span class="arrow">→</span></button>
+              <button class="quiz-option" onclick="nextStep(2)"><span>Bajar más de 20 kg</span><span class="arrow">→</span></button>
+              <button class="quiz-option" onclick="nextStep(2)"><span>Mejorar mi salud metabólica</span><span class="arrow">→</span></button>
+            </div>
+          </div>
+
+          <div class="quiz-step" id="step-3">
+            <div class="quiz-question">¿Tienes alguna de estas condiciones?</div>
+            <div class="quiz-options">
+              <button class="quiz-option" onclick="showResult()"><span>Diabetes tipo 2 o resistencia a la insulina</span><span class="arrow">→</span></button>
+              <button class="quiz-option" onclick="showResult()"><span>Hipertensión o colesterol alto</span><span class="arrow">→</span></button>
+              <button class="quiz-option" onclick="showResult()"><span>Hígado graso</span><span class="arrow">→</span></button>
+              <button class="quiz-option" onclick="showResult()"><span>Ninguna de las anteriores</span><span class="arrow">→</span></button>
+            </div>
+          </div>
+
+          <div class="quiz-step" id="step-result">
+            <div class="quiz-result">
+              <div class="quiz-result-icon">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12l5 5L20 7"/></svg>
+              </div>
+              <h4 id="result-title">Eres un buen candidato</h4>
+              <p id="result-text">Tu IMC y perfil sugieren que el tratamiento con GLP-1 podría ayudarte. El siguiente paso es una teleconsulta con un médico para evaluar en detalle.</p>
+              <a href="#" class="btn-primary">Agendar mi consulta
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="stats-bar">
+    <div class="stats-track">
+      <div class="stats-item"><strong>42%</strong> de chilenos con obesidad</div>
+      <span class="stats-divider"></span>
+      <div class="stats-item"><strong>83%</strong> con sobrepeso u obesidad</div>
+      <span class="stats-divider"></span>
+      <div class="stats-item"><strong>#1</strong> en obesidad de Sudamérica</div>
+      <span class="stats-divider"></span>
+      <div class="stats-item"><strong>15–20%</strong> pérdida de peso con GLP-1</div>
+      <span class="stats-divider"></span>
+      <div class="stats-item"><strong>42%</strong> de chilenos con obesidad</div>
+      <span class="stats-divider"></span>
+      <div class="stats-item"><strong>83%</strong> con sobrepeso u obesidad</div>
+      <span class="stats-divider"></span>
+      <div class="stats-item"><strong>#1</strong> en obesidad de Sudamérica</div>
+      <span class="stats-divider"></span>
+      <div class="stats-item"><strong>15–20%</strong> pérdida de peso con GLP-1</div>
+      <span class="stats-divider"></span>
+    </div>
+  </div>
+
+  <section id="como-funciona">
+    <div class="container">
+      <div class="section-head reveal">
+        <div class="eyebrow">Cómo funciona</div>
+        <h2 class="display">Tres pasos. <em>Sin filas</em>, sin esperas.</h2>
+        <p class="lead">Tu tratamiento parte con una evaluación médica completa. Si calificas, recibes la receta electrónica el mismo día y el medicamento llega a tu casa en 24–48 horas.</p>
+      </div>
+      <div class="steps">
+        <div class="step reveal">
+          <div class="step-num">01</div>
+          <h3>Evaluación online</h3>
+          <p>Completas un cuestionario clínico de 5 minutos: peso, estatura, antecedentes, medicamentos actuales y objetivos. Lo revisa nuestro equipo médico.</p>
+          <div class="step-meta">5 minutos</div>
+        </div>
+        <div class="step reveal delay-1">
+          <div class="step-num">02</div>
+          <h3>Teleconsulta médica</h3>
+          <p>Videoconsulta de 15 a 20 minutos con un médico chileno titulado. Si calificas, emite tu receta electrónica con firma avanzada al instante.</p>
+          <div class="step-meta">15–20 minutos</div>
+        </div>
+        <div class="step reveal delay-2">
+          <div class="step-num">03</div>
+          <h3>Medicamento en tu casa</h3>
+          <p>Tu farmacia aliada despacha el tratamiento con cadena de frío directo a tu domicilio. Seguimiento mensual con tu médico incluido.</p>
+          <div class="step-meta">24–48 horas</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="planes">
+    <div class="pricing-section">
+      <div class="pricing-head reveal">
+        <div class="eyebrow">Planes</div>
+        <h2 class="display">Precios <em>transparentes.</em><br/>Sin letra chica.</h2>
+        <p class="lead">Cancela cuando quieras. Sin contrato anual. Todos los planes incluyen consulta médica, receta electrónica y soporte.</p>
+      </div>
+      <div class="plans">
+        <div class="plan reveal">
+          <div class="plan-name">Consulta única</div>
+          <div class="plan-tagline">Para quienes solo quieren la evaluación y receta.</div>
+          <div class="plan-price"><span class="amount">$39.990</span></div>
+          <div class="plan-note">Pago único · sin recurrencia</div>
+          <ul class="plan-features">
+            <li>Teleconsulta con médico titulado</li>
+            <li>Receta electrónica con firma avanzada</li>
+            <li>Plan nutricional digital</li>
+            <li>Recomendación de exámenes</li>
+          </ul>
+          <a href="#" class="plan-cta">Comenzar evaluación →</a>
+        </div>
+        <div class="plan featured reveal delay-1">
+          <div class="plan-badge">Más elegido</div>
+          <div class="plan-name">Plan Mensual</div>
+          <div class="plan-tagline">Tratamiento completo con seguimiento continuo.</div>
+          <div class="plan-price"><span class="amount">$49.990</span><span class="period">/mes</span></div>
+          <div class="plan-note">Medicamento aparte · Cancela cuando quieras</div>
+          <ul class="plan-features">
+            <li>Consulta inicial + control mensual</li>
+            <li>Mensajería ilimitada con tu médico</li>
+            <li>Ajuste de dosis y receta cada mes</li>
+            <li>Coordinación con farmacia aliada</li>
+            <li>Plan nutricional personalizado</li>
+            <li>Acceso a portal de seguimiento</li>
+          </ul>
+          <a href="#" class="plan-cta">Comenzar tratamiento →</a>
+        </div>
+        <div class="plan reveal delay-2">
+          <div class="plan-name">Plan Completo</div>
+          <div class="plan-tagline">Todo incluido: consulta, seguimiento y medicamento.</div>
+          <div class="plan-price"><span class="amount">$179.990</span><span class="period">/mes</span></div>
+          <div class="plan-note">Incluye medicamento despachado · Sin sobrecostos</div>
+          <ul class="plan-features">
+            <li>Todo lo del Plan Mensual</li>
+            <li>Medicamento GLP-1 incluido*</li>
+            <li>Despacho mensual a domicilio</li>
+            <li>Cadena de frío garantizada</li>
+            <li>Apoyo nutricional con profesional</li>
+            <li>Soporte 7 días a la semana</li>
+          </ul>
+          <a href="#" class="plan-cta">Comenzar plan completo →</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="trust" id="medicos">
+    <div class="container">
+      <div class="trust-grid">
+        <div>
+          <div class="section-head reveal" style="margin-bottom: 0;">
+            <div class="eyebrow">Médicos</div>
+            <h2 class="display">Médicos chilenos. <em>Titulados y registrados.</em></h2>
+            <p class="lead">Trabajamos exclusivamente con médicos habilitados por la Superintendencia de Salud, con experiencia en manejo de obesidad y firma electrónica avanzada.</p>
+          </div>
+          <div class="trust-points">
+            <div class="trust-point reveal delay-1">
+              <div class="trust-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9 9 4.03 9 9z"/></svg>
+              </div>
+              <div>
+                <h4>Registrados en Superintendencia de Salud</h4>
+                <p>Habilitados para ejercer en Chile y emitir recetas electrónicas válidas en cualquier farmacia.</p>
+              </div>
+            </div>
+            <div class="trust-point reveal delay-2">
+              <div class="trust-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1z"/></svg>
+              </div>
+              <div>
+                <h4>Protocolo clínico estandarizado</h4>
+                <p>Seguimos guías internacionales y mejores prácticas en titulación de dosis para minimizar efectos adversos.</p>
+              </div>
+            </div>
+            <div class="trust-point reveal delay-3">
+              <div class="trust-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1018 0 9 9 0 00-18 0zM12 8v4l3 2"/></svg>
+              </div>
+              <div>
+                <h4>Seguimiento continuo</h4>
+                <p>Mensajería con tu médico, controles mensuales y ajustes según cómo respondas al tratamiento.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="quote-card reveal delay-2">
+          <div class="quote-mark">"</div>
+          <blockquote>La obesidad es una enfermedad crónica que requiere tratamiento médico, no fuerza de voluntad. El acceso temprano a GLP-1 cambia trayectorias completas de salud.</blockquote>
+          <div class="quote-author">
+            <div class="quote-avatar">DR</div>
+            <div>
+              <strong>Dr. Director Médico</strong>
+              <span>Nutriólogo · Universidad de Chile</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="faq">
+    <div class="container">
+      <div class="section-head reveal">
+        <div class="eyebrow">Preguntas frecuentes</div>
+        <h2 class="display">Lo que <em>todos</em> preguntan.</h2>
+      </div>
+      <div class="faq-list">
+        <div class="faq-item">
+          <button class="faq-trigger" onclick="toggleFaq(this)"><span>¿Qué es exactamente un GLP-1?</span><span class="faq-icon">+</span></button>
+          <div class="faq-content"><p>Los GLP-1 son medicamentos que imitan una hormona natural que tu intestino produce después de comer. Reducen el apetito, alargan la sensación de saciedad y mejoran el control de la glicemia. Los más conocidos son la semaglutida (Ozempic, Wegovy, Rybelsus) y la tirzepatida (Mounjaro).</p></div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-trigger" onclick="toggleFaq(this)"><span>¿Es seguro el tratamiento?</span><span class="faq-icon">+</span></button>
+          <div class="faq-content"><p>Los GLP-1 tienen un perfil de seguridad bien estudiado cuando se prescriben con evaluación médica. Los efectos secundarios más comunes son gastrointestinales (náuseas, diarrea), generalmente leves y transitorios. Existen contraindicaciones específicas que tu médico evaluará en la consulta.</p></div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-trigger" onclick="toggleFaq(this)"><span>¿Necesito hacerme exámenes antes?</span><span class="faq-icon">+</span></button>
+          <div class="faq-content"><p>No es estrictamente obligatorio para iniciar, pero es altamente recomendable. Tu médico evaluará tu caso en la consulta. Si lo considera necesario, te pedirá exámenes (perfil lipídico, función renal, hepática, tiroidea) antes o durante el tratamiento.</p></div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-trigger" onclick="toggleFaq(this)"><span>¿Cuánto cuesta el medicamento aparte?</span><span class="faq-icon">+</span></button>
+          <div class="faq-content"><p>El medicamento original (Ozempic) cuesta aproximadamente entre $185.000 y $335.000 CLP por mes según la dosis. Con la entrada de genéricos en 2026, los precios bajarán significativamente. En nuestro Plan Completo el medicamento ya viene incluido.</p></div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-trigger" onclick="toggleFaq(this)"><span>¿Quién me va a atender?</span><span class="faq-icon">+</span></button>
+          <div class="faq-content"><p>Médicos chilenos titulados, registrados en la Superintendencia de Salud y con experiencia en manejo de obesidad y diabetes. Todos cuentan con firma electrónica avanzada para emitir recetas válidas. Verás el nombre y RUT del profesional antes de tu consulta.</p></div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-trigger" onclick="toggleFaq(this)"><span>¿Y si tengo efectos secundarios?</span><span class="faq-icon">+</span></button>
+          <div class="faq-content"><p>Tendrás mensajería directa con tu médico tratante. Si presentas efectos adversos, ajustamos dosis, recomendamos pausar o cambiamos enfoque según corresponda. Para urgencias, siempre dirige al servicio de urgencias más cercano.</p></div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-trigger" onclick="toggleFaq(this)"><span>¿Hay despacho a regiones?</span><span class="faq-icon">+</span></button>
+          <div class="faq-content"><p>Sí. Despachamos a todo Chile con cadena de frío garantizada. En la Región Metropolitana el despacho llega en 24 horas hábiles. En regiones, entre 48 y 72 horas.</p></div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-trigger" onclick="toggleFaq(this)"><span>¿Puedo cancelar cuando quiera?</span><span class="faq-icon">+</span></button>
+          <div class="faq-content"><p>Sí, sin penalización. No firmas contrato anual. Si cancelas a mitad de mes, mantienes acceso hasta el fin del ciclo pagado. La idea es que estés porque te sirve, no porque estás amarrado.</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="cta-big">
+    <div class="container">
+      <div class="eyebrow reveal">Empieza hoy</div>
+      <h2 class="display reveal delay-1">El primer paso es <em>gratis.</em></h2>
+      <p class="lead reveal delay-2">La evaluación inicial no tiene costo. Si calificas, agendas tu consulta. Si no, te explicamos qué alternativas existen.</p>
+      <div class="cta-actions reveal delay-3">
+        <a href="#evaluacion" class="btn-primary btn-large">Comenzar evaluación
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+        </a>
+        <a href="#faq" class="btn-secondary">Tengo más preguntas</a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <h3>glp1<span style="color: var(--rust);">.</span>cl</h3>
+          <p>Plataforma de telemedicina especializada en tratamiento médico de obesidad con GLP-1, conectándote con médicos chilenos titulados.</p>
+        </div>
+        <div class="footer-col">
+          <h5>Producto</h5>
+          <ul>
+            <li><a href="#como-funciona">Cómo funciona</a></li>
+            <li><a href="#planes">Planes</a></li>
+            <li><a href="#evaluacion">Evaluación</a></li>
+            <li><a href="#faq">Preguntas</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h5>Empresa</h5>
+          <ul>
+            <li><a href="#">Sobre nosotros</a></li>
+            <li><a href="#">Médicos</a></li>
+            <li><a href="#">Blog</a></li>
+            <li><a href="#">Contacto</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h5>Legal</h5>
+          <ul>
+            <li><a href="#">Términos</a></li>
+            <li><a href="#">Privacidad</a></li>
+            <li><a href="#">Datos personales</a></li>
+            <li><a href="#">Reclamos</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <div class="disclaimer">glp1.cl es una plataforma de telemedicina que conecta pacientes con médicos titulados en Chile. La prescripción de cualquier medicamento depende exclusivamente del criterio del médico tratante tras evaluación clínica. No se garantiza prescripción. Este sitio no reemplaza una atención médica de urgencia. Si presentas síntomas graves, llama al 131 o acude al servicio de urgencias más cercano.</div>
+        <div class="copyright">© 2026 glp1.cl</div>
+      </div>
+    </div>
+  </footer>
+
+  <a href="https://wa.me/56900000000" class="float-cta" target="_blank" rel="noopener" aria-label="Habla con un asesor por WhatsApp">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+    <span class="float-cta-text">Habla con un asesor</span>
+  </a>
+
+  <script>
+    function toggleMenu() {
+      const links = document.getElementById('nav-links');
+      links.classList.toggle('is-open');
+      const icon = document.querySelector('#menu-icon path');
+      if (links.classList.contains('is-open')) {
+        icon.setAttribute('d', 'M18 6L6 18M6 6l12 12');
+      } else {
+        icon.setAttribute('d', 'M3 12h18M3 6h18M3 18h18');
+      }
+    }
+
+    let imc = 0;
+    function nextStep(currentStep) {
+      if (currentStep === 1) {
+        const peso = parseFloat(document.getElementById('peso').value);
+        const estatura = parseFloat(document.getElementById('estatura').value);
+        if (!peso || !estatura || peso < 40 || estatura < 120) {
+          document.getElementById('peso').style.borderColor = peso ? '' : 'var(--rust)';
+          document.getElementById('estatura').style.borderColor = estatura ? '' : 'var(--rust)';
+          return;
+        }
+        imc = peso / Math.pow(estatura/100, 2);
+      }
+      document.getElementById(`step-${currentStep}`).classList.remove('active');
+      document.getElementById(`step-${currentStep + 1}`).classList.add('active');
+      document.getElementById(`bar-${currentStep + 1}`)?.classList.add('done');
+    }
+    function showResult() {
+      document.getElementById('step-3').classList.remove('active');
+      document.getElementById('step-result').classList.add('active');
+      document.getElementById('quiz-title').textContent = 'Resultado de tu evaluación';
+      document.getElementById('quiz-subtitle').style.display = 'none';
+      const resultTitle = document.getElementById('result-title');
+      const resultText = document.getElementById('result-text');
+      if (imc >= 30) {
+        resultTitle.textContent = 'Eres un excelente candidato';
+        resultText.textContent = `Tu IMC de ${imc.toFixed(1)} indica obesidad. El tratamiento con GLP-1 está clínicamente indicado en tu caso. Agenda tu consulta para iniciar.`;
+      } else if (imc >= 27) {
+        resultTitle.textContent = 'Probable candidato';
+        resultText.textContent = `Tu IMC de ${imc.toFixed(1)} indica sobrepeso. Si tienes condiciones asociadas, podrías beneficiarte del tratamiento. Conversa con un médico para confirmar.`;
+      } else if (imc >= 25) {
+        resultTitle.textContent = 'Evaluación recomendada';
+        resultText.textContent = `Tu IMC de ${imc.toFixed(1)} está sobre el rango saludable. El médico evaluará si GLP-1 es la mejor opción.`;
+      } else {
+        resultTitle.textContent = 'No es tu mejor opción';
+        resultText.textContent = `Tu IMC de ${imc.toFixed(1)} está dentro del rango saludable. El tratamiento con GLP-1 no está indicado.`;
+      }
+    }
+    function toggleFaq(btn) {
+      const item = btn.parentElement;
+      const wasOpen = item.classList.contains('open');
+      document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+      if (!wasOpen) item.classList.add('open');
+    }
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.classList.add('in');
+          observer.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+    setTimeout(() => {
+      document.querySelectorAll('.hero .reveal').forEach(el => el.classList.add('in'));
+    }, 100);
+  </script>
+</body>
+</html>
