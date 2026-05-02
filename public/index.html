@@ -580,6 +580,16 @@
     .contact-form .btn-primary:disabled { opacity: 0.6; cursor: wait; transform: none; box-shadow: none; }
     .lead-disclaimer { font-size: 12px; color: var(--ink-soft, #5a5a5a); margin-top: 12px; line-height: 1.5; text-align: center; }
     .lead-error { color: var(--rust); font-size: 13px; margin-top: 10px; text-align: center; }
+    .field-error { color: var(--rust); font-size: 12px; margin-top: 4px; min-height: 16px; line-height: 1.3; }
+    .quiz-input-row input.invalid { border-color: var(--rust); background: #fff5f3; }
+    .quiz-input-row .phone-wrap { position: relative; }
+    .quiz-input-row .phone-prefix {
+      position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+      pointer-events: none; color: var(--ink); font-weight: 500; font-size: 15px;
+    }
+    .quiz-input-row .phone-prefix.below-label { top: calc(50% + 11px); }
+    .quiz-input-row input.has-prefix { padding-left: 56px; }
+    .hp-field { position: absolute; left: -9999px; top: -9999px; opacity: 0; pointer-events: none; tab-index: -1; height: 0; width: 0; }
     .lead-success { display: none; text-align: center; padding: 16px 0 4px; }
     .lead-success.active { display: block; animation: fadeUp .3s ease; }
     .lead-success h4 { font-family: var(--font-serif, 'Fraunces', serif); font-size: 22px; margin: 12px 0 8px; color: var(--ink); }
@@ -1567,28 +1577,39 @@
               </button>
             </div>
 
-            <form id="contact-form" class="contact-form" onsubmit="submitLead(event)" novalidate>
+            <form id="contact-form" class="contact-form" onsubmit="submitLead(event)" novalidate autocomplete="on">
               <div class="quiz-question" style="margin-top:18px">Déjanos tus datos y un médico te contactará en menos de 24 hrs.</div>
+              <!-- honeypot: humanos no lo ven, bots sí lo llenan -->
+              <div class="hp-field" aria-hidden="true">
+                <label for="lead-website">No completar</label>
+                <input type="text" id="lead-website" name="website" tabindex="-1" autocomplete="off" />
+              </div>
               <div class="quiz-input-row" style="grid-template-columns:1fr">
                 <div>
                   <label for="lead-nombre">Nombre completo</label>
                   <input type="text" id="lead-nombre" autocomplete="name" required maxlength="80" placeholder="María González" />
+                  <div class="field-error" id="err-nombre"></div>
                 </div>
               </div>
               <div class="quiz-input-row" style="grid-template-columns:1fr 1fr">
                 <div>
                   <label for="lead-email">Email</label>
-                  <input type="email" id="lead-email" autocomplete="email" required maxlength="120" placeholder="tu@email.com" />
+                  <input type="email" id="lead-email" autocomplete="email" required maxlength="120" inputmode="email" placeholder="tu@email.com" />
+                  <div class="field-error" id="err-email"></div>
                 </div>
                 <div>
                   <label for="lead-telefono">WhatsApp</label>
-                  <input type="tel" id="lead-telefono" autocomplete="tel" required maxlength="30" placeholder="+56 9 1234 5678" />
+                  <div class="phone-wrap">
+                    <span class="phone-prefix below-label">+56 9</span>
+                    <input type="tel" id="lead-telefono" class="has-prefix" autocomplete="tel-national" required maxlength="11" inputmode="numeric" placeholder="1234 5678" />
+                  </div>
+                  <div class="field-error" id="err-telefono"></div>
                 </div>
               </div>
               <button type="submit" class="btn-primary" id="lead-submit">Enviar y agendar
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
               </button>
-              <p class="lead-disclaimer">Al enviar aceptas que un médico de glp1.cl se contacte contigo. No compartimos tus datos.</p>
+              <p class="lead-disclaimer">Solo atendemos en Chile. Al enviar aceptas que un médico de glp1.cl se contacte contigo. No compartimos tus datos.</p>
             </form>
 
             <div id="lead-success" class="lead-success">
@@ -1934,11 +1955,84 @@
       }
     }
 
+    // tracking del momento en que se abre el formulario (anti-bot: rechazar submits ultra-rápidos)
+    let contactOpenedAt = 0;
+    const MIN_FILL_MS = 2500; // un humano tarda al menos esto en completar 3 campos
+
     function openContactForm() {
       document.getElementById('cta-agendar').classList.add('is-hidden');
       document.getElementById('contact-form').classList.add('active');
+      contactOpenedAt = Date.now();
       setTimeout(() => document.getElementById('lead-nombre').focus(), 60);
     }
+
+    // === validadores ===
+    // email: stricter — letras/numeros/.+-_ antes de @, dominio con TLD de al menos 2 chars
+    const EMAIL_RE = /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/;
+    // dominios desechables que bloqueamos también en el cliente para feedback inmediato
+    const DISPOSABLE_DOMAINS = new Set([
+      'mailinator.com','10minutemail.com','guerrillamail.com','tempmail.com','yopmail.com',
+      'throwaway.email','fakemail.net','getairmail.com','sharklasers.com','dispostable.com',
+      'maildrop.cc','tempmailo.com','mintemail.com','trashmail.com','mailnesia.com'
+    ]);
+
+    function validateEmail(value) {
+      if (!value) return 'Ingresa tu email.';
+      if (!EMAIL_RE.test(value)) return 'Formato de email no válido.';
+      const domain = value.split('@')[1].toLowerCase();
+      if (DISPOSABLE_DOMAINS.has(domain)) return 'Usa un email permanente, no temporal.';
+      return '';
+    }
+
+    // teléfono: solo aceptamos celulares chilenos. El input está pre-fijado con +56 9, así que esperamos 8 dígitos.
+    function normalizePhoneDigits(raw) {
+      return (raw || '').replace(/\D/g, '');
+    }
+    function validatePhone(rawDigits) {
+      const d = normalizePhoneDigits(rawDigits);
+      if (!d) return 'Ingresa tu WhatsApp chileno.';
+      if (d.length !== 8) return 'El número debe tener 8 dígitos (después del +56 9).';
+      // primer dígito no puede ser 0 (ningún celular chileno empieza así después del 9)
+      if (d[0] === '0') return 'Número chileno no válido.';
+      return '';
+    }
+    function validateNombre(value) {
+      if (!value) return 'Ingresa tu nombre.';
+      if (value.length < 3) return 'Nombre muy corto.';
+      if (!/\s/.test(value)) return 'Incluye nombre y apellido.';
+      if (/https?:\/\/|www\./i.test(value)) return 'Quita la URL del nombre.';
+      return '';
+    }
+
+    // formato visual del teléfono: "1234 5678" mientras el usuario escribe (8 dígitos)
+    function formatPhoneInput(input) {
+      const d = normalizePhoneDigits(input.value).slice(0, 8);
+      input.value = d.length > 4 ? d.slice(0, 4) + ' ' + d.slice(4) : d;
+    }
+
+    function setFieldError(id, msg) {
+      const input = document.getElementById('lead-' + id);
+      const err = document.getElementById('err-' + id);
+      if (msg) {
+        input.classList.add('invalid');
+        err.textContent = msg;
+      } else {
+        input.classList.remove('invalid');
+        err.textContent = '';
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const phone = document.getElementById('lead-telefono');
+      if (phone) {
+        phone.addEventListener('input', () => formatPhoneInput(phone));
+        phone.addEventListener('blur', () => setFieldError('telefono', validatePhone(phone.value)));
+      }
+      const email = document.getElementById('lead-email');
+      if (email) email.addEventListener('blur', () => setFieldError('email', validateEmail(email.value.trim())));
+      const nombre = document.getElementById('lead-nombre');
+      if (nombre) nombre.addEventListener('blur', () => setFieldError('nombre', validateNombre(nombre.value.trim())));
+    });
 
     async function submitLead(ev) {
       ev.preventDefault();
@@ -1949,22 +2043,48 @@
 
       const nombre = document.getElementById('lead-nombre').value.trim();
       const email = document.getElementById('lead-email').value.trim();
-      const telefono = document.getElementById('lead-telefono').value.trim();
+      const telefonoRaw = document.getElementById('lead-telefono').value.trim();
+      const honeypot = document.getElementById('lead-website').value;
 
-      if (!nombre || !email || !telefono) {
-        showLeadError(form, 'Completa nombre, email y WhatsApp.');
+      // honeypot lleno → fingir éxito y no enviar nada (los bots no se enteran)
+      if (honeypot) {
+        document.querySelector('#step-result .quiz-result').classList.add('is-hidden');
+        form.classList.remove('active');
+        document.getElementById('lead-success').classList.add('active');
         return;
       }
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-        showLeadError(form, 'Revisa el formato del email.');
+
+      // submit ultra-rápido → bot
+      const elapsed = Date.now() - (contactOpenedAt || 0);
+      if (elapsed < MIN_FILL_MS) {
+        showLeadError(form, 'Tomate un segundo para revisar tus datos.');
         return;
       }
+
+      // validaciones por campo
+      const errs = {
+        nombre: validateNombre(nombre),
+        email: validateEmail(email),
+        telefono: validatePhone(telefonoRaw),
+      };
+      let hasError = false;
+      for (const k of Object.keys(errs)) { setFieldError(k, errs[k]); if (errs[k]) hasError = true; }
+      if (hasError) return;
+
+      const telefonoDigits = normalizePhoneDigits(telefonoRaw);
+      const telefonoE164 = '+569' + telefonoDigits;
 
       const payload = {
         ...leadData,
         nombre,
         email,
-        telefono,
+        telefono: telefonoE164,
+        // metadata anti-spam que el backend revisa
+        _meta: {
+          honeypot: '',
+          elapsed_ms: elapsed,
+          opened_at: contactOpenedAt,
+        }
       };
 
       submitBtn.disabled = true;

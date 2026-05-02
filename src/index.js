@@ -35,6 +35,19 @@ const VALID_CONDICIONES = new Set([
   "Ninguna",
 ]);
 
+const EMAIL_RE = /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/;
+
+// dominios desechables — bloqueamos los más usados por scrapers
+const DISPOSABLE_DOMAINS = new Set([
+  "mailinator.com", "10minutemail.com", "guerrillamail.com", "tempmail.com", "yopmail.com",
+  "throwaway.email", "fakemail.net", "getairmail.com", "sharklasers.com", "dispostable.com",
+  "maildrop.cc", "tempmailo.com", "mintemail.com", "trashmail.com", "mailnesia.com",
+  "tempr.email", "spam4.me", "mvrht.net", "mt2014.com", "mailinator2.com",
+  "33mail.com", "emailondeck.com", "fakeinbox.com", "guerrillamailblock.com", "mohmal.com"
+]);
+
+const MIN_FILL_MS = 2000; // un humano no completa el form en menos de 2s
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
@@ -77,6 +90,20 @@ async function handleLead(request, env, ctx) {
     return json({ ok: false, error: "invalid_json" }, request, 400);
   }
 
+  // === capa anti-spam ===
+  // honeypot: si viene relleno, fingimos éxito y descartamos silenciosamente
+  const honeypot = (body && body._meta && typeof body._meta.honeypot === "string") ? body._meta.honeypot : "";
+  if (honeypot && honeypot.trim().length > 0) {
+    return json({ ok: true, imc: 0, categoriaIMC: "" }, request); // bot no se entera
+  }
+
+  // tiempo mínimo en form — bots envían en milisegundos
+  const elapsedMs = (body && body._meta && typeof body._meta.elapsed_ms === "number") ? body._meta.elapsed_ms : 0;
+  if (elapsedMs && elapsedMs < MIN_FILL_MS) {
+    return json({ ok: false, error: "too_fast" }, request, 400);
+  }
+
+  // === validaciones de datos ===
   const peso = num(body.peso);
   const estatura = num(body.estatura);
   if (!peso || !estatura || peso < 40 || peso > 250 || estatura < 120 || estatura > 220) {
@@ -90,10 +117,30 @@ async function handleLead(request, env, ctx) {
   const condiciones = VALID_CONDICIONES.has(body.condiciones) ? body.condiciones : null;
 
   const nombre = clean(body.nombre, 80);
-  const email = clean(body.email, 120);
-  const telefono = clean(body.telefono, 30);
+  const email = clean(body.email, 120).toLowerCase();
+  const telefonoRaw = clean(body.telefono, 30);
   const notas = clean(body.notas, 1000);
   const userAgent = clean(request.headers.get("user-agent") || "", 240);
+
+  // nombre: requerido, al menos un espacio (nombre + apellido), sin URLs
+  if (!nombre || nombre.length < 3 || !/\s/.test(nombre) || /https?:\/\/|www\./i.test(nombre)) {
+    return json({ ok: false, error: "invalid_name" }, request, 400);
+  }
+
+  // email: regex + bloqueo de dominios desechables
+  if (!EMAIL_RE.test(email)) {
+    return json({ ok: false, error: "invalid_email" }, request, 400);
+  }
+  const emailDomain = email.split("@")[1];
+  if (DISPOSABLE_DOMAINS.has(emailDomain)) {
+    return json({ ok: false, error: "disposable_email" }, request, 400);
+  }
+
+  // teléfono: aceptamos solo celulares chilenos. Normalizamos a +569 + 8 dígitos.
+  const telefono = normalizeChileMobile(telefonoRaw);
+  if (!telefono) {
+    return json({ ok: false, error: "invalid_phone" }, request, 400);
+  }
 
   // 2. fan-out: Notion + Resend en paralelo, no bloquea respuesta al usuario
   const tasks = [];
@@ -234,6 +281,35 @@ function clasificarIMC(imc) {
   if (imc >= 27) return "Probable candidato";
   if (imc >= 25) return "Evaluación recomendada";
   return "No es candidato";
+}
+
+/**
+ * Normaliza un teléfono a formato chileno celular E.164: "+569XXXXXXXX".
+ * Acepta entradas como:
+ *   "+56 9 1234 5678", "569 1234 5678", "9 1234 5678", "12345678", "1234 5678"
+ * Devuelve null si no se puede normalizar a un celular chileno válido.
+ */
+function normalizeChileMobile(raw) {
+  if (!raw) return null;
+  const digits = String(raw).replace(/\D/g, "");
+  if (!digits) return null;
+
+  let local; // 8 dígitos del celular sin prefijo de país ni el 9
+  if (digits.length === 11 && digits.startsWith("569")) {
+    local = digits.slice(3);
+  } else if (digits.length === 9 && digits.startsWith("9")) {
+    local = digits.slice(1);
+  } else if (digits.length === 8) {
+    local = digits;
+  } else {
+    return null;
+  }
+
+  if (local.length !== 8) return null;
+  // primer dígito no puede ser 0 (no hay celulares chilenos así)
+  if (local[0] === "0") return null;
+
+  return "+569" + local;
 }
 
 function num(v) {
