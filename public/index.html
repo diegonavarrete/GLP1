@@ -574,6 +574,19 @@
     @media (min-width: 768px) {
       .quiz-result h4 { font-size: 24px; }
     }
+    .contact-form { display: none; margin-top: 8px; }
+    .contact-form.active { display: block; animation: fadeUp .3s ease; }
+    .contact-form .btn-primary { width: 100%; margin-top: 4px; }
+    .contact-form .btn-primary:disabled { opacity: 0.6; cursor: wait; transform: none; box-shadow: none; }
+    .lead-disclaimer { font-size: 12px; color: var(--ink-soft, #5a5a5a); margin-top: 12px; line-height: 1.5; text-align: center; }
+    .lead-error { color: var(--rust); font-size: 13px; margin-top: 10px; text-align: center; }
+    .lead-success { display: none; text-align: center; padding: 16px 0 4px; }
+    .lead-success.active { display: block; animation: fadeUp .3s ease; }
+    .lead-success h4 { font-family: var(--font-serif, 'Fraunces', serif); font-size: 22px; margin: 12px 0 8px; color: var(--ink); }
+    .lead-success p { font-size: 14px; color: #5a5a5a; line-height: 1.55; }
+    #cta-agendar.is-hidden { display: none; }
+    .quiz-result.is-hidden { display: none; }
+
     .quiz-result p {
       font-size: 14px;
       color: var(--muted);
@@ -1525,20 +1538,20 @@
           <div class="quiz-step" id="step-2">
             <div class="quiz-question">¿Cuál es tu objetivo principal?</div>
             <div class="quiz-options">
-              <button class="quiz-option" onclick="nextStep(2)"><span>Bajar 5–10 kg</span><span class="arrow">→</span></button>
-              <button class="quiz-option" onclick="nextStep(2)"><span>Bajar 10–20 kg</span><span class="arrow">→</span></button>
-              <button class="quiz-option" onclick="nextStep(2)"><span>Bajar más de 20 kg</span><span class="arrow">→</span></button>
-              <button class="quiz-option" onclick="nextStep(2)"><span>Mejorar mi salud metabólica</span><span class="arrow">→</span></button>
+              <button class="quiz-option" onclick="pickObjetivo('Bajar 5–10 kg')"><span>Bajar 5–10 kg</span><span class="arrow">→</span></button>
+              <button class="quiz-option" onclick="pickObjetivo('Bajar 10–20 kg')"><span>Bajar 10–20 kg</span><span class="arrow">→</span></button>
+              <button class="quiz-option" onclick="pickObjetivo('Bajar más de 20 kg')"><span>Bajar más de 20 kg</span><span class="arrow">→</span></button>
+              <button class="quiz-option" onclick="pickObjetivo('Mejorar salud metabólica')"><span>Mejorar mi salud metabólica</span><span class="arrow">→</span></button>
             </div>
           </div>
 
           <div class="quiz-step" id="step-3">
             <div class="quiz-question">¿Tienes alguna de estas condiciones?</div>
             <div class="quiz-options">
-              <button class="quiz-option" onclick="showResult()"><span>Diabetes tipo 2 o resistencia a la insulina</span><span class="arrow">→</span></button>
-              <button class="quiz-option" onclick="showResult()"><span>Hipertensión o colesterol alto</span><span class="arrow">→</span></button>
-              <button class="quiz-option" onclick="showResult()"><span>Hígado graso</span><span class="arrow">→</span></button>
-              <button class="quiz-option" onclick="showResult()"><span>Ninguna de las anteriores</span><span class="arrow">→</span></button>
+              <button class="quiz-option" onclick="pickCondiciones('Diabetes 2 / Resistencia insulina')"><span>Diabetes tipo 2 o resistencia a la insulina</span><span class="arrow">→</span></button>
+              <button class="quiz-option" onclick="pickCondiciones('Hipertensión / Colesterol')"><span>Hipertensión o colesterol alto</span><span class="arrow">→</span></button>
+              <button class="quiz-option" onclick="pickCondiciones('Hígado graso')"><span>Hígado graso</span><span class="arrow">→</span></button>
+              <button class="quiz-option" onclick="pickCondiciones('Ninguna')"><span>Ninguna de las anteriores</span><span class="arrow">→</span></button>
             </div>
           </div>
 
@@ -1549,9 +1562,41 @@
               </div>
               <h4 id="result-title">Eres un buen candidato</h4>
               <p id="result-text">Tu IMC y perfil sugieren que el tratamiento con GLP-1 podría ayudarte. El siguiente paso es una teleconsulta con un médico para evaluar en detalle.</p>
-              <a href="#" class="btn-primary">Agendar mi consulta
+              <button type="button" class="btn-primary" id="cta-agendar" onclick="openContactForm()">Agendar mi consulta
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
-              </a>
+              </button>
+            </div>
+
+            <form id="contact-form" class="contact-form" onsubmit="submitLead(event)" novalidate>
+              <div class="quiz-question" style="margin-top:18px">Déjanos tus datos y un médico te contactará en menos de 24 hrs.</div>
+              <div class="quiz-input-row" style="grid-template-columns:1fr">
+                <div>
+                  <label for="lead-nombre">Nombre completo</label>
+                  <input type="text" id="lead-nombre" autocomplete="name" required maxlength="80" placeholder="María González" />
+                </div>
+              </div>
+              <div class="quiz-input-row" style="grid-template-columns:1fr 1fr">
+                <div>
+                  <label for="lead-email">Email</label>
+                  <input type="email" id="lead-email" autocomplete="email" required maxlength="120" placeholder="tu@email.com" />
+                </div>
+                <div>
+                  <label for="lead-telefono">WhatsApp</label>
+                  <input type="tel" id="lead-telefono" autocomplete="tel" required maxlength="30" placeholder="+56 9 1234 5678" />
+                </div>
+              </div>
+              <button type="submit" class="btn-primary" id="lead-submit">Enviar y agendar
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+              </button>
+              <p class="lead-disclaimer">Al enviar aceptas que un médico de glp1.cl se contacte contigo. No compartimos tus datos.</p>
+            </form>
+
+            <div id="lead-success" class="lead-success">
+              <div class="quiz-result-icon" style="background:#0F2722;color:#fff">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12l5 5L20 7"/></svg>
+              </div>
+              <h4>¡Listo! Recibimos tu evaluación</h4>
+              <p>Un médico te contactará por WhatsApp en menos de 24 horas hábiles para coordinar tu teleconsulta.</p>
             </div>
           </div>
         </div>
@@ -1836,7 +1881,9 @@
       }
     }
 
+    const leadData = { peso: 0, estatura: 0, imc: 0, objetivo: null, condiciones: null };
     let imc = 0;
+
     function nextStep(currentStep) {
       if (currentStep === 1) {
         const peso = parseFloat(document.getElementById('peso').value);
@@ -1847,11 +1894,24 @@
           return;
         }
         imc = peso / Math.pow(estatura/100, 2);
+        leadData.peso = peso;
+        leadData.estatura = estatura;
+        leadData.imc = +imc.toFixed(1);
       }
       document.getElementById(`step-${currentStep}`).classList.remove('active');
       document.getElementById(`step-${currentStep + 1}`).classList.add('active');
       document.getElementById(`bar-${currentStep + 1}`)?.classList.add('done');
     }
+
+    function pickObjetivo(value) {
+      leadData.objetivo = value;
+      nextStep(2);
+    }
+    function pickCondiciones(value) {
+      leadData.condiciones = value;
+      showResult();
+    }
+
     function showResult() {
       document.getElementById('step-3').classList.remove('active');
       document.getElementById('step-result').classList.add('active');
@@ -1872,6 +1932,72 @@
         resultTitle.textContent = 'No es tu mejor opción';
         resultText.textContent = `Tu IMC de ${imc.toFixed(1)} está dentro del rango saludable. El tratamiento con GLP-1 no está indicado.`;
       }
+    }
+
+    function openContactForm() {
+      document.getElementById('cta-agendar').classList.add('is-hidden');
+      document.getElementById('contact-form').classList.add('active');
+      setTimeout(() => document.getElementById('lead-nombre').focus(), 60);
+    }
+
+    async function submitLead(ev) {
+      ev.preventDefault();
+      const form = ev.target;
+      const submitBtn = document.getElementById('lead-submit');
+      const oldErr = form.querySelector('.lead-error');
+      if (oldErr) oldErr.remove();
+
+      const nombre = document.getElementById('lead-nombre').value.trim();
+      const email = document.getElementById('lead-email').value.trim();
+      const telefono = document.getElementById('lead-telefono').value.trim();
+
+      if (!nombre || !email || !telefono) {
+        showLeadError(form, 'Completa nombre, email y WhatsApp.');
+        return;
+      }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        showLeadError(form, 'Revisa el formato del email.');
+        return;
+      }
+
+      const payload = {
+        ...leadData,
+        nombre,
+        email,
+        telefono,
+      };
+
+      submitBtn.disabled = true;
+      const original = submitBtn.innerHTML;
+      submitBtn.innerHTML = 'Enviando…';
+
+      try {
+        const res = await fetch('/api/lead', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || data.ok === false) {
+          throw new Error(data.error || `HTTP ${res.status}`);
+        }
+        document.querySelector('#step-result .quiz-result').classList.add('is-hidden');
+        form.classList.remove('active');
+        document.getElementById('lead-success').classList.add('active');
+        if (window.gtag) window.gtag('event', 'lead_submit', { imc: leadData.imc, objetivo: leadData.objetivo });
+      } catch (err) {
+        console.error('lead submit failed', err);
+        showLeadError(form, 'No pudimos enviar tu evaluación. Intenta nuevamente o escríbenos por WhatsApp.');
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = original;
+      }
+    }
+
+    function showLeadError(form, msg) {
+      const p = document.createElement('p');
+      p.className = 'lead-error';
+      p.textContent = msg;
+      form.appendChild(p);
     }
     function toggleFaq(btn) {
       const item = btn.parentElement;
