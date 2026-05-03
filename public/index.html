@@ -587,7 +587,6 @@
       position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
       pointer-events: none; color: var(--ink); font-weight: 500; font-size: 15px;
     }
-    .quiz-input-row .phone-prefix.below-label { top: calc(50% + 11px); }
     .quiz-input-row input.has-prefix { padding-left: 56px; }
     .hp-field { position: absolute; left: -9999px; top: -9999px; opacity: 0; pointer-events: none; tab-index: -1; height: 0; width: 0; }
     .lead-success { display: none; text-align: center; padding: 16px 0 4px; }
@@ -1600,7 +1599,7 @@
                 <div>
                   <label for="lead-telefono">WhatsApp</label>
                   <div class="phone-wrap">
-                    <span class="phone-prefix below-label">+56 9</span>
+                    <span class="phone-prefix">+56 9</span>
                     <input type="tel" id="lead-telefono" class="has-prefix" autocomplete="tel-national" required maxlength="11" inputmode="numeric" placeholder="1234 5678" />
                   </div>
                   <div class="field-error" id="err-telefono"></div>
